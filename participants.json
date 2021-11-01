@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Bob",
+    "number": "+44123456789",
+    "exclusions": ["Sally"]
+  },
+  {
+    "name": "Sally",
+    "number": "+44123456789",
+    "exclusions": ["Bob"]
+  },
+  {
+    "name": "Jim",
+    "number": "+44123456789",
+    "exclusions": ["Susan"]
+  },
+  {
+    "name": "Susan",
+    "number": "+44123456789",
+    "exclusions": ["Jim"]
+  },
+  {
+    "name": "Frank",
+    "number": "+44123456789",
+    "exclusions": ["Betty"]
+  },
+  {
+    "name": "Betty",
+    "number": "+44123456789",
+    "exclusions": ["Frank"]
+  }
+]
