@@ -12,31 +12,39 @@ class SIM800L:
         self.power = Pin(power_pin, Pin.OUT)
         self.debug = debug
         self.reboot()
-        self._ensure_connected_to_network()
 
-    def exec(self, command, timeout=1000, eol=NEW_LINE):
-        response = self.query(command, timeout, eol)
+    def exec(self, command, timeout_ms=1000, eol=NEW_LINE):
+        response = self.query(command, timeout_ms, eol)
         if "OK" not in response:
             raise Exception("Unknown response for '%s': %s" %
                             (command, response))
 
-    def query(self, command, timeout=1000, eol=NEW_LINE):
+    def query(self, command, timeout_ms=1000, eol=NEW_LINE):
         if self.debug:
             print("[Debug] AT Write - %s\n" % command)
         self.modem.write((command + eol).encode())
-        response = self._read_buffer(timeout)
+        response = self._read_buffer(timeout_ms)
         if self.debug:
             print("[Debug] AT Read - %s\n" % response)
         return response
 
-    def send_sms(self, number, message):
+    def send_sms(self, number, message, timeout_ms=5000):
         response = self.query('AT+CMGS="%s"' % number, eol="\n")
         if ">" not in response:
             raise Exception("Unknown response: %s" % response)
-        self.exec(message, timeout=10000, eol="\x1A")
+        self.exec(message, timeout_ms, eol="\x1A")
 
-    def reboot(self, attempts=10):
+    def reboot(self):
         self._power_cycle()
+        self._configure_modem()
+        self._ensure_connected_to_network()
+
+    def _power_cycle(self):
+        self.power.value(1)
+        sleep(1.5)
+        self.power.value(0)
+
+    def _configure_modem(self, attempts=10):
         while attempts > 0:
             try:
                 self.exec("AT")  # Check modem ready
@@ -46,7 +54,7 @@ class SIM800L:
             except:
                 attempts -= 1
                 sleep(1)
-        raise Exception("Failed to reboot")
+        raise Exception("Unable to configure modem")
 
     def _ensure_connected_to_network(self, attempts=50):
         while attempts > 0:
@@ -59,15 +67,10 @@ class SIM800L:
                 sleep(1)
         raise Exception("Failed to connect")
 
-    def _power_cycle(self):
-        self.power.value(1)
-        sleep(1.5)
-        self.power.value(0)
-
-    def _read_buffer(self, timeout):
+    def _read_buffer(self, timeout_ms):
         buffer = bytes()
         now = ticks_ms()
-        while (ticks_ms() - now) < timeout and len(buffer) < 1025:
+        while (ticks_ms() - now) < timeout_ms and len(buffer) < 1025:
             if self.modem.any():
                 buffer += self.modem.read(1)
         return buffer.decode()
